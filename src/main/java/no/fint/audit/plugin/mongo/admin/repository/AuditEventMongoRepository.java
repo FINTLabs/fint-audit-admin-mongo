@@ -65,4 +65,9 @@ public  class AuditEventMongoRepository {
     public void save(MongoAuditEvent mongoAuditEvent) {
         mongoTemplate.save(mongoAuditEvent);
     }
+
+    @Profile(value = "test")
+    public void drop() {
+        mongoTemplate.dropCollection(MongoAuditEvent.class);
+    }
 }
