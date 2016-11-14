@@ -1,0 +1,8 @@
+cd docker/mongo
+docker-compose stop
+docker-compose up -d
+
+cd ..
+docker-compose rm -f
+docker build -t fint/audit-admin-mongo ../
+docker-compose up -d

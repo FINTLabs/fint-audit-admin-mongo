@@ -12,7 +12,8 @@ node {
         }
 
         stage('deploy') {
-
+            sh 'chmod +x docker-build'
+            sh 'sudo sh ./docker-build'
         }
     }
 

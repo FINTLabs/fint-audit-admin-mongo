@@ -1,6 +1,6 @@
 package no.fint.audit.plugin.mongo.admin.model
 
-import no.fint.events.model.Event
+import no.fint.event.model.Event
 import spock.lang.Specification
 
 

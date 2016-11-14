@@ -1,7 +1,7 @@
 package no.fint.audit.plugin.mongo.admin.model;
 
 import no.fint.audit.model.AuditEvent;
-import no.fint.events.model.Event;
+import no.fint.event.model.Event;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
