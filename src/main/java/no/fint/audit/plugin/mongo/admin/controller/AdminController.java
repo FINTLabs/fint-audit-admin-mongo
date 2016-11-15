@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Slf4j
+@CrossOrigin("*")
 @RequestMapping(value = "/audit/events", produces = MediaType.APPLICATION_JSON_VALUE)
 @RestController
 public class AdminController {
