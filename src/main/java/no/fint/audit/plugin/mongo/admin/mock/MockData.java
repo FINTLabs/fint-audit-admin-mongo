@@ -80,7 +80,7 @@ public class MockData {
             MongoAuditEvent mongoAuditEvent = new MongoAuditEvent(event, true);
             auditEventMongoRepository.save(mongoAuditEvent);
 
-            event.setStatus(Status.INBOUND_QUEUE);
+            event.setStatus(Status.DOWNSTREAM_QUEUE);
             mongoAuditEvent = new MongoAuditEvent(event, true);
             auditEventMongoRepository.save(mongoAuditEvent);
 
@@ -96,7 +96,7 @@ public class MockData {
             mongoAuditEvent = new MongoAuditEvent(event, true);
             auditEventMongoRepository.save(mongoAuditEvent);
 
-            event.setStatus(Status.OUTBOUND_QUEUE);
+            event.setStatus(Status.UPSTREAM_QUEUE);
             mongoAuditEvent = new MongoAuditEvent(event, true);
             auditEventMongoRepository.save(mongoAuditEvent);
 

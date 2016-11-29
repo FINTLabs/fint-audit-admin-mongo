@@ -35,7 +35,7 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-web')
 	compile('org.springframework.cloud:spring-cloud-starter-config')
 
-	compile('no.fint:fint-audit-api:0.0.12')
+	compile('no.fint:fint-audit-api:0.0.18')
 
 	runtime('org.springframework.boot:spring-boot-devtools')
 
