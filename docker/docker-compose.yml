@@ -1,5 +1,0 @@
-fint-audit-admin-mongo:
- image: "fint/audit-admin-mongo"
- restart: unless-stopped
- ports:
-  - "8102:8080"

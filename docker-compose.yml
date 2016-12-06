@@ -1,0 +1,19 @@
+version: '2'
+
+services:
+  fint-audit-admin-mongo:
+    build: .
+    image: fint/audit-admin-mongo
+    container_name: fint-audit-admin-mongo${CONTAINER_SUFFIX}
+    restart: unless-stopped
+    depends_on: [fint-mongodb]
+    ports:
+      - "${DOCKER_PORT}:8080"
+
+  fint-mongodb:
+    image: "mongo"
+    container_name: mongo_fint-mongodb${CONTAINER_SUFFIX}
+    hostname: "audit-mongodb"
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
