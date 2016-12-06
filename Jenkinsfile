@@ -2,6 +2,7 @@
 node {
     currentBuild.result = "SUCCESS"
     env.DOCKER_PORT      = (env.BRANCH_NAME == 'master') ? 8102 : 10102;
+    env.MONGO_PORT       = (env.BRANCH_NAME == 'master') ? 27017: 27018; 
     env.CONTAINER_SUFFIX = (env.BRANCH_NAME == 'master') ? "" : "_${env.BRANCH_NAME}"
     sh "echo Building branch: ${env.BRANCH_NAME} to fint-audit-admin-mongo${env.CONTAINER_SUFFIX}:${env.DOCKER_PORT}"
 
