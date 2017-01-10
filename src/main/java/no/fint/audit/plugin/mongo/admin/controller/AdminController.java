@@ -5,13 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import no.fint.audit.plugin.mongo.admin.model.MongoAuditEvent;
 import no.fint.audit.plugin.mongo.admin.repository.AuditEventMongoRepository;
 import no.rogfk.hateoas.extension.HalPagedResources;
+import no.rogfk.hateoas.extension.annotations.HalResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import no.rogfk.hateoas.extension.annotations.HalResource;
-
-
-import java.util.List;
 
 @Slf4j
 @CrossOrigin("*")
@@ -50,16 +47,16 @@ public class AdminController {
     @HalResource(pageSize = 100)
     @RequestMapping(value = "org/source/{source}", method = RequestMethod.GET)
     public HalPagedResources<MongoAuditEvent> getOrgAuditEventsBySource(@RequestHeader("x-org-id") String orgId,
-                                                           @PathVariable String source,
-                                                           @RequestParam(required = false) Integer page) {
+                                                                        @PathVariable String source,
+                                                                        @RequestParam(required = false) Integer page) {
         return new HalPagedResources<>(auditEventMongoRepository.getOrgAuditEventsBySource(orgId, source), page);
     }
 
     @HalResource(pageSize = 100)
     @RequestMapping(value = "org/corrid/{corrId}", method = RequestMethod.GET)
     public HalPagedResources<MongoAuditEvent> getOrgAuditEventsByCorrId(@RequestHeader("x-org-id") String orgId,
-                                                           @PathVariable String corrId,
-                                                           @RequestParam(required = false) Integer page) {
+                                                                        @PathVariable String corrId,
+                                                                        @RequestParam(required = false) Integer page) {
         return new HalPagedResources<>(auditEventMongoRepository.getOrgAuditEventsByCorrId(orgId, corrId), page);
     }
 

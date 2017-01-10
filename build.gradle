@@ -42,7 +42,7 @@ dependencies {
 	compile('no.rogfk:spring-hateoas-hal-extension:0.0.6')
 
 
-	compile('no.fint:fint-audit-api:0.0.18')
+	compile('no.fint:fint-audit-api:0.0.19')
 
 	runtime('org.springframework.boot:spring-boot-devtools')
 

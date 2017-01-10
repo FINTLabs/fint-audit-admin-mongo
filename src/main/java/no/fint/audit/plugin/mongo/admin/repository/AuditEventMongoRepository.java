@@ -6,23 +6,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-/*
-public interface AuditEventMongoRepository extends MongoRepository<MongoAuditEvent, String> {
-    public List<MongoAuditEvent> getAllAuditEvents();
-    public List<MongoAuditEvent> getAllAuditEventsBySource(String source);
-    public List<MongoAuditEvent> getOrgAuditEvents(String source);
-    public List<MongoAuditEvent> getOrgAuditEventsByCorrId(String orgId, String corrId);
-    public List<MongoAuditEvent> getOrgAuditEventsBySource(String orgId, String source);
-}
-*/
-
 @Repository
-public  class AuditEventMongoRepository {
+public class AuditEventMongoRepository {
 
     @Autowired
     MongoTemplate mongoTemplate;
