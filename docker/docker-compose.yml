@@ -1,5 +1,14 @@
-fint-audit-admin-mongo:
- image: "fint/audit-admin-mongo"
- restart: unless-stopped
- ports:
-  - "8102:8080"
+version: "2"
+services:
+  fint-audit-admin-mongo:
+    image: "fint/audit-admin-mongo"
+    restart: unless-stopped
+    ports:
+    - "8102:8080"
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://localhost:12201"
+    environment:
+      TZ: Europe/Oslo
+      logging.level.root: INFO
