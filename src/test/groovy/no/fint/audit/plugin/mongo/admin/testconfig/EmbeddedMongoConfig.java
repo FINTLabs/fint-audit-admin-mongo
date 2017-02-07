@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.config.AbstractMongoConfiguration;
 
 @Configuration
-public class EmbeddeMongoConfig extends AbstractMongoConfiguration{
+public class EmbeddedMongoConfig extends AbstractMongoConfiguration {
 
     @Value("${fint.audit.mongo.databasename:fint-audit}")
     private String databaseName;

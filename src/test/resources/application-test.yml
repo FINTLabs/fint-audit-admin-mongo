@@ -1,0 +1,6 @@
+fint:
+ audit:
+  mongo:
+   databasename: fint-test
+   hostname: localhost
+   port: 27017

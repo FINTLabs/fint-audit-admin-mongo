@@ -1,6 +1,7 @@
 package no.fint.audit.plugin.mongo.admin.repository
 
 import no.fint.audit.plugin.mongo.admin.model.MongoAuditEvent
+import no.fint.audit.plugin.mongo.admin.model.MongoAuditEventGroup
 import no.fint.audit.plugin.mongo.admin.testutils.EventFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -14,9 +15,9 @@ import spock.lang.Specification
 class AuditEventMongoRepositorySpec extends Specification {
 
     @Autowired
-    AuditEventMongoRepository auditEventMongoRepository;
+    private AuditEventMongoRepository auditEventMongoRepository
 
-    MongoAuditEvent mongoAuditEvent
+    private MongoAuditEvent mongoAuditEvent
 
     def setup() {
         mongoAuditEvent = EventFactory.create("rogfk.no", "Arbeidstaker", "VFS", "GET_ALL_EMPLOYEES")
@@ -34,7 +35,7 @@ class AuditEventMongoRepositorySpec extends Specification {
 
     def "Get All Audit Events"() {
         when:
-        List<MongoAuditEvent> events = auditEventMongoRepository.getAllAuditEvents()
+        List<MongoAuditEventGroup> events = auditEventMongoRepository.getAllAuditEvents(1, 10)
 
         then:
         events.size() == 5
