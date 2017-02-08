@@ -2,10 +2,12 @@ package no.fint.audit.plugin.mongo.admin.repository;
 
 import no.fint.audit.plugin.mongo.admin.model.MongoAuditEvent;
 import no.fint.audit.plugin.mongo.admin.model.MongoAuditEventGroup;
+import no.fint.audit.plugin.mongo.admin.model.PageableAuditEventGroup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -24,6 +26,8 @@ public class AuditEventMongoRepository {
 
     /**
      * // This should return the following mongo shell appliance:
+     * db.mongoAuditEvent.aggregate([{$group: {_id: "$corrId"}}, {$group: {_id: 1, total: {$sum: 1}}}]);
+     *
      * db.mongoAuditEvent.aggregate([
      *      {$group: {_id : "$corrId", currentEvent: {"$last": "$event.status"}, events: { $push: "$$ROOT"} }},
      *      {$sort: {"events.timestamp": -1} }, // Latest first
@@ -31,18 +35,32 @@ public class AuditEventMongoRepository {
      *      {$limit: pageSize}
      * ])
      */
-    public List<MongoAuditEventGroup> getAllAuditEvents(long page, long pageSize) {
-        return mongoTemplate.aggregate(
+    public PageableAuditEventGroup getAllAuditEvents(long page, long pageSize) {
+        // Get totals, page and pagesize
+        PageableAuditEventGroup pageable = mongoTemplate.aggregate(
             newAggregation(
-                group("corrId").last("event.status").as("currentEvent").push("$$ROOT").as("events"),
-                sort(Sort.Direction.DESC, "events.timestamp"),
-                skip(page - 1),
-                limit(page * pageSize)
-                // TODO: Project row total, page and pageSize into the query resultset - at root level
-            ).withOptions(newAggregationOptions().allowDiskUse(true).build()),
-                MongoAuditEvent.class,
-                MongoAuditEventGroup.class
-        ).getMappedResults();
+                group("corrId"),
+                group("_id.corrId").count().as("totalItems")
+            ), MongoAuditEvent.class, PageableAuditEventGroup.class).getMappedResults().get(0);
+
+        return pageable
+            .setPage(page)
+            .setPageSize(pageSize)
+
+            // Get data
+            .setData(mongoTemplate.aggregate(
+                newAggregation(
+                    group("corrId")
+                        .last("event.status").as("currentEvent")
+                        .push("$$ROOT").as("events")
+                        .count().as("totalItems"),
+                    sort(Sort.Direction.DESC, "events.timestamp"),
+                    skip(page - 1),
+                    limit(page * pageSize)
+                ).withOptions(newAggregationOptions().allowDiskUse(true).build()),
+                    MongoAuditEvent.class,
+                    MongoAuditEventGroup.class
+            ).getMappedResults());
     }
 
     public List<MongoAuditEventGroup> search(String what, long page, long pageSize) {

@@ -3,6 +3,7 @@ package no.fint.audit.plugin.mongo.admin.controller;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.audit.plugin.mongo.admin.model.MongoAuditEvent;
 import no.fint.audit.plugin.mongo.admin.model.MongoAuditEventGroup;
+import no.fint.audit.plugin.mongo.admin.model.PageableAuditEventGroup;
 import no.fint.audit.plugin.mongo.admin.repository.AuditEventMongoRepository;
 import no.rogfk.hateoas.extension.HalPagedResources;
 import no.rogfk.hateoas.extension.annotations.HalResource;
@@ -22,7 +23,7 @@ public class AdminController {
     AuditEventMongoRepository auditEventMongoRepository;
 
     @RequestMapping(method = RequestMethod.GET)
-    public List<MongoAuditEventGroup> getAllAuditEvents(@RequestParam(required = false, defaultValue = "1") Long page, @RequestParam(required = false, defaultValue = "10") Long pageSize) {
+    public PageableAuditEventGroup getAllAuditEvents(@RequestParam(required = false, defaultValue = "1") Long page, @RequestParam(required = false, defaultValue = "10") Long pageSize) {
         return auditEventMongoRepository.getAllAuditEvents(page, pageSize);
     }
 
