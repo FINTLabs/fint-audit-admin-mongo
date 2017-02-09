@@ -54,8 +54,8 @@ public class AuditEventMongoRepository {
                         .last("event").as("currentEvent")
                         .push("$$ROOT").as("events"),
                     sort(Sort.Direction.DESC, "corrId"),
-                    skip(page - 1),
-                    limit(page * pageSize)
+                    skip((page - 1) * pageSize),
+                    limit(pageSize)
                 ).withOptions(newAggregationOptions().allowDiskUse(true).build()),
                     MongoAuditEvent.class,
                     MongoAuditEventGroup.class
