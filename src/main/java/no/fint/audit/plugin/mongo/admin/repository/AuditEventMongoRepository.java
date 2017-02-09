@@ -30,7 +30,7 @@ public class AuditEventMongoRepository {
      *
      * db.mongoAuditEvent.aggregate([
      *      {$group: {_id : "$corrId", currentEvent: {"$last": "$event.status"}, events: { $push: "$$ROOT"} }},
-     *      {$sort: {"events.timestamp": -1} }, // Latest first
+     *      {$sort: {"corrId": -1} }, // Latest first
      *      {$skip: page * pageSize },
      *      {$limit: pageSize}
      * ])
@@ -51,10 +51,9 @@ public class AuditEventMongoRepository {
             .setData(mongoTemplate.aggregate(
                 newAggregation(
                     group("corrId")
-                        .last("event.status").as("currentEvent")
-                        .push("$$ROOT").as("events")
-                        .count().as("totalItems"),
-                    sort(Sort.Direction.DESC, "events.timestamp"),
+                        .last("event").as("currentEvent")
+                        .push("$$ROOT").as("events"),
+                    sort(Sort.Direction.DESC, "corrId"),
                     skip(page - 1),
                     limit(page * pageSize)
                 ).withOptions(newAggregationOptions().allowDiskUse(true).build()),

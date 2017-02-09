@@ -1,5 +1,6 @@
 package no.fint.audit.plugin.mongo.admin.model;
 
+import no.fint.event.model.Event;
 import org.springframework.data.annotation.Id;
 
 import java.io.Serializable;
@@ -10,10 +11,10 @@ import java.io.Serializable;
 public class MongoAuditEventGroup implements Serializable {
     @Id
     private String            corrId;
-    private String            currentEvent;
+    private Event             currentEvent;
     private MongoAuditEvent[] events;
 
-    public MongoAuditEventGroup(String corrId, String currentEvent, MongoAuditEvent[] events) {
+    public MongoAuditEventGroup(String corrId, Event currentEvent, MongoAuditEvent[] events) {
         this.corrId = corrId;
         this.currentEvent = currentEvent;
         this.events = events;
@@ -27,11 +28,11 @@ public class MongoAuditEventGroup implements Serializable {
         this.events = events;
     }
 
-    public String getCurrentEvent() {
+    public Event getCurrentEvent() {
         return currentEvent;
     }
 
-    public void setCurrentEvent(String currentEvent) {
+    public void setCurrentEvent(Event currentEvent) {
         this.currentEvent = currentEvent;
     }
 
