@@ -1,11 +1,12 @@
 package no.fint.audit.plugin.mongo.admin.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by oystein.amundsen on 08.02.2017.
  */
-public class PageableAuditEventGroup {
+public class PageableAuditEventGroup implements Serializable {
     private Long                       totalItems = 0L;
     private Long                       page = 0L;
     private Long                       pageSize = 0L;

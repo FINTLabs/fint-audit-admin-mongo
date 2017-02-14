@@ -7,15 +7,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
-import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 
 @Repository
@@ -25,93 +25,176 @@ public class AuditEventMongoRepository {
     MongoTemplate mongoTemplate;
 
     /**
-     * // This should return the following mongo shell appliance:
-     * db.mongoAuditEvent.aggregate([{$group: {_id: "$corrId"}}, {$group: {_id: 1, total: {$sum: 1}}}]);
+     * This should run the following mongo shell appliance:
      *
-     * db.mongoAuditEvent.aggregate([
-     *      {$group: {_id : "$corrId", currentEvent: {"$last": "$event.status"}, events: { $push: "$$ROOT"} }},
-     *      {$sort: {"corrId": -1} }, // Latest first
-     *      {$skip: page * pageSize },
-     *      {$limit: pageSize}
-     * ])
+     *      // Find totals
+     *      db.mongoAuditEvent.aggregate([
+     *          {$match: {orgId: "[orgId]"}},  // Only applied if orgId is given
+     *          {$group: {_id: "$corrId"}},
+     *          {$group: {_id: "$_id.corrId", totalItems: {$sum: 1}}}
+     *      ]);
+     *
+     *      // Query data
+     *      db.mongoAuditEvent.aggregate([
+     *          {$match: {orgId: "[orgId]"}},  // Only applied if orgId is given
+     *          {$group: {_id : "$corrId", currentEvent: {"$last": "$event"}, events: { $push: "$$ROOT"} }},
+     *          {$sort: {"corrId": -1} }, // Latest first
+     *          {$skip: page * pageSize },
+     *          {$limit: pageSize}
+     *      ]);
+     *
+     * @param orgId     - Only given if request comes from an client tied to an organisation
+     * @param page      - Current page
+     * @param pageSize  - How many items we should return per page
+     *
+     * @return A PageableAuditEventGroup object containing paging information and data
      */
-    public PageableAuditEventGroup getAllAuditEvents(long page, long pageSize) {
-        // Get totals, page and pagesize
-        PageableAuditEventGroup pageable = mongoTemplate.aggregate(
-            newAggregation(
-                group("corrId"),
-                group("_id.corrId").count().as("totalItems")
-            ), MongoAuditEvent.class, PageableAuditEventGroup.class).getMappedResults().get(0);
+    public PageableAuditEventGroup getAllAuditEvents(String orgId, long page, long pageSize) {
+        // Create pageable
+        PageableAuditEventGroup pageable = createPageable(wrapOrgIdOperations(orgId), page, pageSize);
+
+        // Create next aggregation set
+        List<AggregationOperation> operations = wrapOrgIdOperations(orgId);
+        operations.add(group("corrId")
+            .last("event").as("currentEvent")
+            .push("$$ROOT").as("events"));
+        operations.add(sort(Sort.Direction.DESC, "corrId"));
+        operations.add(skip((page - 1) * pageSize));
+        operations.add(limit(pageSize));
+
+        // Aggregate and return pageable
+        return pageable.setData(
+                mongoTemplate.aggregate(
+                    newAggregation(
+                        operations.toArray(new AggregationOperation[operations.size()])
+                    ).withOptions(newAggregationOptions().allowDiskUse(true).build()),
+                    MongoAuditEvent.class,
+                    MongoAuditEventGroup.class
+                ).getMappedResults()
+            );
+    }
+
+    /**
+     * Performs a query on the audit events. The query runs matches on `what` for the following columns:
+     *   * corrId
+     *   * source
+     *   * orgId (If orgId is not given. Otherwise a static fulltext match is performed)
+     *
+     * This should run the following mongo shell appliance:
+     *
+     *      // Create matcher for cases where orgId is NOT given
+     *      var matcher =
+     *        {$match: {
+     *          $or: [
+     *            {"corrId": {$regex: "what", $options: "i"}},
+     *            {"source": {$regex: "what", $options: "i"}},
+     *            {"orgId" : {$regex: "what", $options: "i"}}
+     *          ]
+     *        }};
+     *
+     *      // Create matcher for cases where orgId IS given
+     *      var matcher =
+     *        {$match: {
+     *          "orgId": "[orgId]",
+     *          $and: [{
+     *            $or: [
+     *              {"corrId": {$regex: "what", $options: "i"}},
+     *              {"source": {$regex: "what", $options: "i"}}
+     *            ]
+     *          }]
+     *        }},
+
+     *      // Find totals
+     *      db.mongoAuditEvent.aggregate([
+     *          matcher,
+     *          {"$group": {"_id": "$corrId"}},
+     *          {"$group": {"_id": "$_id.corrId", "totalItems": {"$sum": 1}}}
+     *      ]);
+     *
+     *      // Query data
+     *      db.mongoAuditEvent.aggregate([
+     *          matcher,
+     *          {$group: {_id : "$corrId", currentEvent: {"$last": "$event"}, events: { $push: "$$ROOT"} }},
+     *          {$sort: {"corrId": -1} }, // Latest first
+     *          {$skip: page * pageSize },
+     *          {$limit: pageSize}
+     *      ]);
+     *
+     * @param orgId     - Only given if request comes from an client tied to an organisation
+     * @param what      - What to search for
+     * @param page      - Current page
+     * @param pageSize  - How many items we should return per page
+     *
+     * @return A PageableAuditEventGroup object containing paging information and data
+     */
+    public PageableAuditEventGroup search(String orgId, String what, long page, long pageSize) {
+        List<Criteria> criterias = new ArrayList<>();
+        criterias.add(Criteria.where("corrId").regex(what, "i"));
+        criterias.add(Criteria.where("source").regex(what, "i"));
+        if (orgId == null) { // If given orgId is null, search on orgId should be possible
+            criterias.add(Criteria.where("orgId").regex(what, "i"));
+        }
+        Criteria matchCriterias = new Criteria().orOperator(criterias.toArray(new Criteria[criterias.size()]));
+
+        // Wrap around an orgId matcher if orgId is specified
+        if (orgId != null) { matchCriterias = Criteria.where("orgId").is(orgId).andOperator(matchCriterias); }
+
+        List<AggregationOperation> operations = new ArrayList<>();
+        operations.add(match(matchCriterias));
+        PageableAuditEventGroup pageable = createPageable(operations, page, pageSize);
+
+        return pageable.setData(
+                mongoTemplate.aggregate(
+                    newAggregation(
+                        match(matchCriterias),
+                        group("corrId").last("event").as("currentEvent").push("$$ROOT").as("events"),
+                        sort(Sort.Direction.DESC, "events.timestamp"),
+                        skip(page - 1),
+                        limit(page * pageSize)
+                    ).withOptions(newAggregationOptions().allowDiskUse(true).build()),
+                    MongoAuditEvent.class,
+                    MongoAuditEventGroup.class
+                ).getMappedResults()
+            );
+    }
+
+    /*
+     * Creates a PageableAuditEventGroup object containing information for
+     * the number of available rows based on your applied list of
+     * aggregation operations, the current page number and amount of
+     * elements per page.
+     */
+    private PageableAuditEventGroup createPageable(List<AggregationOperation> operations, long page, long pageSize) {
+        operations.add(group("corrId"));
+        operations.add(group("_id.corrId").count().as("totalItems"));
+
+        PageableAuditEventGroup pageable;
+        try {
+            AggregationResults<PageableAuditEventGroup> results = mongoTemplate.aggregate(
+                newAggregation(operations.toArray(new AggregationOperation[operations.size()])),
+                MongoAuditEvent.class,
+                PageableAuditEventGroup.class
+            );
+            List<PageableAuditEventGroup> pageableList = results.getMappedResults();
+            pageable = pageableList.get(0);
+        } catch(IndexOutOfBoundsException ex) {
+            pageable = new PageableAuditEventGroup();
+        }
 
         return pageable
             .setPage(page)
-            .setPageSize(pageSize)
-
-            // Get data
-            .setData(mongoTemplate.aggregate(
-                newAggregation(
-                    group("corrId")
-                        .last("event").as("currentEvent")
-                        .push("$$ROOT").as("events"),
-                    sort(Sort.Direction.DESC, "corrId"),
-                    skip((page - 1) * pageSize),
-                    limit(pageSize)
-                ).withOptions(newAggregationOptions().allowDiskUse(true).build()),
-                    MongoAuditEvent.class,
-                    MongoAuditEventGroup.class
-            ).getMappedResults());
+            .setPageSize(pageSize);
     }
 
-    public List<MongoAuditEventGroup> search(String what, long page, long pageSize) {
-        return mongoTemplate.aggregate(
-            newAggregation(
-                match( // TODO: Does not work. Need to find a better way (REF: http://stackoverflow.com/questions/6790819/searching-for-value-of-any-field-in-mongodb-without-explicitly-naming-it#answer-25315763)
-                    where("corrId").regex(what).orOperator(
-                    where("event.source").regex(what).orOperator(
-                    where("event.orgId").regex(what)
-                ))),
-                group("corrId").last("event.status").as("currentEvent").push("$$ROOT").as("events"),
-                sort(Sort.Direction.DESC, "events.timestamp"),
-                skip(page - 1),
-                limit(page * pageSize)
-                // TODO: Project row total, page and pageSize into the query resultset - at root level
-            ).withOptions(newAggregationOptions().allowDiskUse(true).build()),
-                MongoAuditEvent.class,
-                MongoAuditEventGroup.class
-        ).getMappedResults();
+    /*
+     * Creates a List of AggregationOperations, applying a match for orgId
+     * if orgId is specified. Return an empty list if not.
+     */
+    private List<AggregationOperation> wrapOrgIdOperations(String orgId) {
+        List<AggregationOperation> operations = new ArrayList<>();
+        if (orgId != null) { operations.add(match(Criteria.where("orgId").is(orgId))); }
+        return operations;
     }
-
-/* The following methods would be redundant if the search method works */
-    public List<MongoAuditEvent> getAllAuditEventsBySource(String source) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("source").regex(source, "i"));
-        return mongoTemplate.find(query, MongoAuditEvent.class);
-    }
-
-    public List<MongoAuditEvent> getAllAuditEventsByCorrId(String corrId) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("corrId").is(corrId));
-        return mongoTemplate.find(query, MongoAuditEvent.class);
-    }
-
-    public List<MongoAuditEvent> getOrgAuditEvents(String orgId) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("orgId").is(orgId));
-        return mongoTemplate.find(query, MongoAuditEvent.class);
-    }
-
-    public List<MongoAuditEvent> getOrgAuditEventsByCorrId(String orgId, String corrId) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("orgId").is(orgId)).addCriteria(Criteria.where("corrId").is(corrId));
-        return mongoTemplate.find(query, MongoAuditEvent.class);
-    }
-
-    public List<MongoAuditEvent> getOrgAuditEventsBySource(String orgId, String source) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("orgId").is(orgId)).addCriteria(Criteria.where("source").regex(source, "i"));
-        return mongoTemplate.find(query, MongoAuditEvent.class);
-    }
-/* */
 
     @Profile(value = "test")
     public void save(MongoAuditEvent mongoAuditEvent) {
