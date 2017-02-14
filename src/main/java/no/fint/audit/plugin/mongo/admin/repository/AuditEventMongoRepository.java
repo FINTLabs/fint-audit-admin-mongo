@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Repository;
 
@@ -169,11 +170,13 @@ public class AuditEventMongoRepository {
 
         PageableAuditEventGroup pageable;
         try {
-            pageable = mongoTemplate.aggregate(
+            AggregationResults<PageableAuditEventGroup> results = mongoTemplate.aggregate(
                 newAggregation(operations.toArray(new AggregationOperation[operations.size()])),
                 MongoAuditEvent.class,
                 PageableAuditEventGroup.class
-            ).getMappedResults().get(0);
+            );
+            List<PageableAuditEventGroup> pageableList = results.getMappedResults();
+            pageable = pageableList.get(0);
         } catch(IndexOutOfBoundsException ex) {
             pageable = new PageableAuditEventGroup();
         }
