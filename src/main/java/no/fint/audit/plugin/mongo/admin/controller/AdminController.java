@@ -23,48 +23,12 @@ public class AdminController {
     AuditEventMongoRepository auditEventMongoRepository;
 
     @RequestMapping(method = RequestMethod.GET)
-    public PageableAuditEventGroup getAllAuditEvents(@RequestParam(required = false, defaultValue = "1") Long page, @RequestParam(required = false, defaultValue = "10") Long pageSize) {
-        return auditEventMongoRepository.getAllAuditEvents(page, pageSize);
+    public PageableAuditEventGroup getAllAuditEvents(@RequestHeader(required = false, name = "x-org-id") final String orgId, @RequestParam(required = false, defaultValue = "1") Long page, @RequestParam(required = false, defaultValue = "10") Long pageSize) {
+        return auditEventMongoRepository.getAllAuditEvents(orgId, page, pageSize);
     }
 
     @RequestMapping(value = "/search/{what}", method = RequestMethod.GET)
-    public List<MongoAuditEventGroup> search(@PathVariable String what, @RequestParam(required = false, defaultValue = "1") Long page, @RequestParam(required = false, defaultValue = "10") Long pageSize) {
-        return auditEventMongoRepository.search(what, page, pageSize);
+    public PageableAuditEventGroup search(@RequestHeader(required = false, name = "x-org-id") final String orgId, @PathVariable String what, @RequestParam(required = false, defaultValue = "1") Long page, @RequestParam(required = false, defaultValue = "10") Long pageSize) {
+        return auditEventMongoRepository.search(orgId, what, page, pageSize);
     }
-
-/* The following methods would be redundant if the search method works */
-    @HalResource(pageSize = 100)
-    @RequestMapping(value = "/source/{source}", method = RequestMethod.GET)
-    public HalPagedResources<MongoAuditEvent> getAllSourceAuditEvents(@PathVariable String source, @RequestParam(required = false) Integer page) {
-        return new HalPagedResources<>(auditEventMongoRepository.getAllAuditEventsBySource(source), page);
-    }
-
-    @HalResource(pageSize = 100)
-    @RequestMapping(value = "/corrid/{corrId}", method = RequestMethod.GET)
-    public HalPagedResources<MongoAuditEvent> getAllAuditEventsByCorrId(@PathVariable String corrId, @RequestParam(required = false) Integer page) {
-        return new HalPagedResources<>(auditEventMongoRepository.getAllAuditEventsByCorrId(corrId), page);
-    }
-
-    @HalResource(pageSize = 100)
-    @RequestMapping(value = "org", method = RequestMethod.GET)
-    public HalPagedResources<MongoAuditEvent> getOrgAuditEvents(@RequestHeader("x-org-id") String orgId, @RequestParam(required = false) Integer page) {
-        return new HalPagedResources<>(auditEventMongoRepository.getOrgAuditEvents(orgId), page);
-    }
-
-    @HalResource(pageSize = 100)
-    @RequestMapping(value = "org/source/{source}", method = RequestMethod.GET)
-    public HalPagedResources<MongoAuditEvent> getOrgAuditEventsBySource(@RequestHeader("x-org-id") String orgId,
-                                                                        @PathVariable String source,
-                                                                        @RequestParam(required = false) Integer page) {
-        return new HalPagedResources<>(auditEventMongoRepository.getOrgAuditEventsBySource(orgId, source), page);
-    }
-
-    @HalResource(pageSize = 100)
-    @RequestMapping(value = "org/corrid/{corrId}", method = RequestMethod.GET)
-    public HalPagedResources<MongoAuditEvent> getOrgAuditEventsByCorrId(@RequestHeader("x-org-id") String orgId,
-                                                                        @PathVariable String corrId,
-                                                                        @RequestParam(required = false) Integer page) {
-        return new HalPagedResources<>(auditEventMongoRepository.getOrgAuditEventsByCorrId(orgId, corrId), page);
-    }
-/* */
 }

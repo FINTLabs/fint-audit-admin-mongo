@@ -33,56 +33,53 @@ class AuditEventMongoRepositorySpec extends Specification {
         auditEventMongoRepository.drop()
     }
 
-/* TODO: Find out why this is failing, when the repository method clearly works
-   // java.lang.IllegalArgumentException: Expected DBObject or Map, got: d377ca10-34a3-4529-8ebf-b938e80127d0
-
+    // TODO: Find out why this is failing, when the repository method clearly works
+    // java.lang.IllegalArgumentException: Expected DBObject or Map, got: d377ca10-34a3-4529-8ebf-b938e80127d0
     def "Get All Audit Events"() {
         when:
-        PageableAuditEventGroup pageable = auditEventMongoRepository.getAllAuditEvents(1, 10)
+        PageableAuditEventGroup pageable = auditEventMongoRepository.getAllAuditEvents(null, 1, 10)
 
         then:
         pageable.data.size() == 5
     }
-*/
 
     def "Get All Audit Events By Source"() {
         when:
-        List<MongoAuditEvent> events = auditEventMongoRepository.getAllAuditEventsBySource("Arbeidstaker")
+        PageableAuditEventGroup pageable = auditEventMongoRepository.search(null, "Arbeidstaker", 1, 10)
 
         then:
-        events.size() == 2
+        pageable.data.size() == 2
     }
 
     def "Get All Audit Events By CorrId"() {
         when:
-        List<MongoAuditEvent> events = auditEventMongoRepository.getAllAuditEventsByCorrId(mongoAuditEvent.corrId)
+        PageableAuditEventGroup pageable = auditEventMongoRepository.search(null, mongoAuditEvent.corrId, 1, 10)
 
         then:
-        events.size() == 1
+        pageable.data.size() == 1
     }
 
     def "Get Org Audit Events"() {
         when:
-        List<MongoAuditEvent> events = auditEventMongoRepository.getOrgAuditEvents("vaf.no")
+        PageableAuditEventGroup pageable = auditEventMongoRepository.getAllAuditEvents("vaf.no", 1, 10)
 
         then:
-        events.size() == 2
+        pageable.data.size() == 2
     }
 
     def "Get Org Audit Events By CorrId"() {
         when:
-        List<MongoAuditEvent> events = auditEventMongoRepository.getOrgAuditEventsByCorrId("rogfk.no", mongoAuditEvent.corrId)
+        PageableAuditEventGroup pageable = auditEventMongoRepository.search("rogfk.no", mongoAuditEvent.corrId, 1, 10)
 
         then:
-        events.size() == 1
+        pageable.data.size() == 1
     }
 
     def "Get Org Audit Events By Source"() {
         when:
-        List<MongoAuditEvent> events = auditEventMongoRepository.getOrgAuditEventsBySource("rogfk.no", "Organisasjon")
+        PageableAuditEventGroup pageable = auditEventMongoRepository.search("rogfk.no", "Organisasjon", 1, 10)
 
         then:
-        events.size() == 1
+        pageable.data.size() == 1
     }
-
 }
