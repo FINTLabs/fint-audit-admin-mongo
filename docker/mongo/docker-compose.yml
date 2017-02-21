@@ -1,6 +1,0 @@
-fint-mongodb:
- image: "mongo"
- hostname: "audit-mongodb"
- restart: unless-stopped
- ports:
-  - "27017:27017"
