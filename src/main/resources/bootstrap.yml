@@ -3,4 +3,4 @@ spring:
     name: audit
   cloud:
     config:
-      uri: http://sr-is-docker-05:8888
+      uri: http://fint-config-server:8888
