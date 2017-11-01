@@ -83,15 +83,15 @@ public class MockData {
         mongoAuditEvent = new MongoAuditEvent(event, true);
         auditEventMongoRepository.save(mongoAuditEvent);
 
-        event.setStatus(Status.DELIVERED_TO_PROVIDER);
+        event.setStatus(Status.DELIVERED_TO_ADAPTER);
         mongoAuditEvent = new MongoAuditEvent(event, true);
         auditEventMongoRepository.save(mongoAuditEvent);
 
-        event.setStatus(Status.PROVIDER_ACCEPTED);
+        event.setStatus(Status.ADAPTER_ACCEPTED);
         mongoAuditEvent = new MongoAuditEvent(event, true);
         auditEventMongoRepository.save(mongoAuditEvent);
 
-        event.setStatus(Status.PROVIDER_RESPONSE);
+        event.setStatus(Status.ADAPTER_RESPONSE);
         mongoAuditEvent = new MongoAuditEvent(event, true);
         auditEventMongoRepository.save(mongoAuditEvent);
 

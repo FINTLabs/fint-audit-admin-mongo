@@ -1,24 +1,37 @@
-#!groovy
-node {
-    currentBuild.result = "SUCCESS"
-
-    try {
-        stage('checkout') {
-            checkout scm
+pipeline {
+    agent none
+    stages {
+        stage('Prepare') {
+            agent { label 'master' }
+            steps {
+                sh 'git log --oneline | nl -nln | perl -lne \'if (/^(\\d+).*Version (\\d+\\.\\d+\\.\\d+)/) { print "$2-$1"; exit; }\' > version.txt'
+                stash includes: 'version.txt', name: 'version'
+            }
         }
-
-        stage('build') {
-            sh './gradlew clean build'
+        stage('Build') {
+            agent { label 'docker' }
+            steps {
+                unstash 'version'
+                script {
+                    VERSION=readFile('version.txt').trim()
+                }
+                sh "docker build -t 'dtr.rogfk.no/fint-beta/audit-admin-mongo:${VERSION}' ."
+            }
         }
-
-        stage('deploy') {
-            //sh 'chmod +x docker-build'
-            //sh 'sudo sh ./docker-build'
+        stage('Publish') {
+            agent { label 'docker' }
+            when {
+                branch 'master'
+            }
+            steps {
+                withDockerRegistry([credentialsId: 'dtr-rogfk-no', url: 'https://dtr.rogfk.no']) {
+                    unstash 'version'
+                    script {
+                        VERSION=readFile('version.txt').trim()
+                    }
+                    sh "docker push 'dtr.rogfk.no/fint-beta/audit-admin-mongo:${VERSION}'"
+                }
+            }
         }
-    }
-
-    catch (err) {
-        currentBuild.result = "FAILURE"
-        throw err
     }
 }

@@ -1,5 +1,0 @@
-#!/bin/bash
-
-echo "=> Building the binary"
-
-docker run --rm -v $(pwd):/app:rw fint/ubuntu-java-node-gradle ./gradlew clean build

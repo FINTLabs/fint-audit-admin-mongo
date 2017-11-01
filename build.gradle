@@ -1,60 +1,69 @@
 buildscript {
-	ext {
-		springBootVersion = '1.4.2.RELEASE'
-	}
-	repositories {
-		mavenCentral()
-	}
-	dependencies {
-		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-	}
+    ext {
+        springBootVersion = '1.5.8.RELEASE'
+    }
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.17.0'
+    }
 }
 
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'groovy'
 apply plugin: 'maven'
+apply plugin: 'com.github.ben-manes.versions'
 
+def versionFile = new File("version.txt")
+if (versionFile.exists()) {
+    version = versionFile.text.replaceAll("\\s","")
+} else {
+    version = '0.0.0-SNAPSHOT'
+}
 
 jar {
-	baseName = 'fint-audit-admin-mongo'
-	version = '0.0.1-SNAPSHOT'
+    baseName = 'fint-audit-admin-mongo'
+    version = '0.0.1-SNAPSHOT'
 }
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 repositories {
-	mavenCentral()
-	maven {
-		url  "http://dl.bintray.com/fint/maven"
-	}
-	maven {
-		url  "http://dl.bintray.com/rfkikt/maven"
-	}
+    mavenCentral()
+    maven {
+        url  "http://dl.bintray.com/fint/maven"
+    }
+    maven {
+        url  "http://dl.bintray.com/rfkikt/maven"
+    }
 }
 
 
 dependencies {
-	compile('org.springframework.boot:spring-boot-starter-data-mongodb')
-	compile('org.springframework.boot:spring-boot-starter-web')
-	compile('org.springframework.cloud:spring-cloud-starter-config')
+    compile('org.springframework.boot:spring-boot-starter-data-mongodb')
+    compile('org.springframework.boot:spring-boot-starter-web')
+    compile('org.springframework.cloud:spring-cloud-starter-config')
 
-	compile('no.rogfk:spring-hateoas-hal-extension:0.0.6')
+    compile('no.rogfk:spring-hateoas-hal-extension:0.0.6')
 
 
-	compile('no.fint:fint-audit-api:0.0.19')
+    compile('no.fint:fint-audit-api:1.1.1')
 
-	runtime('org.springframework.boot:spring-boot-devtools')
+    runtime('org.springframework.boot:spring-boot-devtools')
 
-	compileOnly('org.projectlombok:lombok')
+    compileOnly('org.projectlombok:lombok')
 
-	testCompile('org.springframework.boot:spring-boot-starter-test')
-	testCompile('com.github.fakemongo:fongo:2.0.9')
-	testCompile('org.spockframework:spock-spring:1.0-groovy-2.4')
+    testCompile('org.springframework.boot:spring-boot-starter-test')
+    testCompile('com.github.fakemongo:fongo:2.1.0')
+    testCompile('org.spockframework:spock-spring:1.0-groovy-2.4')
 }
 
 dependencyManagement {
-	imports {
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:Camden.SR2"
-	}
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:Camden.SR2"
+    }
 }
