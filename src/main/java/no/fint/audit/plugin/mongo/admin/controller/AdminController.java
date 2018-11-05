@@ -1,17 +1,11 @@
 package no.fint.audit.plugin.mongo.admin.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.audit.plugin.mongo.admin.model.MongoAuditEvent;
-import no.fint.audit.plugin.mongo.admin.model.MongoAuditEventGroup;
 import no.fint.audit.plugin.mongo.admin.model.PageableAuditEventGroup;
 import no.fint.audit.plugin.mongo.admin.repository.AuditEventMongoRepository;
-import no.rogfk.hateoas.extension.HalPagedResources;
-import no.rogfk.hateoas.extension.annotations.HalResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Slf4j
 @CrossOrigin("*")

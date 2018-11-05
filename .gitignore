@@ -1,8 +1,12 @@
 .gradle
 .idea
+*.iml
 build
 out
 .DS_Store
 *.log
 *.lck
 /dump/
+.classpath
+.project
+.settings

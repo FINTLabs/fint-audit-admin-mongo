@@ -1,10 +1,10 @@
 package no.fint.audit.plugin.mongo.admin;
 
-import no.rogfk.hateoas.extension.annotations.EnableHalHypermediaSupport;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.hateoas.config.EnableHypermediaSupport;
 
-@EnableHalHypermediaSupport
+@EnableHypermediaSupport(type = EnableHypermediaSupport.HypermediaType.HAL)
 @SpringBootApplication
 public class Application {
 

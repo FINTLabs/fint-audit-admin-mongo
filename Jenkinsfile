@@ -1,37 +1,61 @@
 pipeline {
-    agent none
+    agent { label 'docker' }
     stages {
-        stage('Prepare') {
-            agent { label 'master' }
-            steps {
-                sh 'git log --oneline | nl -nln | perl -lne \'if (/^(\\d+).*Version (\\d+\\.\\d+\\.\\d+)/) { print "$2-$1"; exit; }\' > version.txt'
-                stash includes: 'version.txt', name: 'version'
-            }
-        }
         stage('Build') {
-            agent { label 'docker' }
             steps {
-                unstash 'version'
-                script {
-                    VERSION=readFile('version.txt').trim()
-                }
-                sh "docker build -t 'dtr.rogfk.no/fint-beta/audit-admin-mongo:${VERSION}' ."
+                sh 'git clean -fdx'
+                sh "docker build -t ${GIT_COMMIT} ."
             }
         }
-        stage('Publish') {
-            agent { label 'docker' }
+        stage('Publish Latest') {
             when {
                 branch 'master'
             }
             steps {
-                withDockerRegistry([credentialsId: 'dtr-rogfk-no', url: 'https://dtr.rogfk.no']) {
-                    unstash 'version'
-                    script {
-                        VERSION=readFile('version.txt').trim()
-                    }
-                    sh "docker push 'dtr.rogfk.no/fint-beta/audit-admin-mongo:${VERSION}'"
+                sh "docker tag ${GIT_COMMIT} dtr.fintlabs.no/beta/audit-admin-mongo:latest"
+                withDockerRegistry([credentialsId: 'dtr-fintlabs-no', url: 'https://dtr.fintlabs.no']) {
+                    sh 'docker push dtr.fintlabs.no/beta/audit-admin-mongo:latest'
                 }
             }
         }
+        stage('Publish Version') {
+            when {
+                tag pattern: "v\\d+\\.\\d+\\.\\d+(-\\w+-\\d+)?", comparator: "REGEXP"
+            }
+            steps {
+                script {
+                    VERSION = TAG_NAME[1..-1]
+                }
+                sh "docker tag ${GIT_COMMIT} dtr.fintlabs.no/beta/audit-admin-mongo:${VERSION}"
+                withDockerRegistry([credentialsId: 'dtr-fintlabs-no', url: 'https://dtr.fintlabs.no']) {
+                    sh "docker push dtr.fintlabs.no/beta/audit-admin-mongo:${VERSION}"
+                }
+            }
+        }
+        stage('Publish PR') {
+            when { changeRequest() }
+            steps {
+                sh "docker tag ${GIT_COMMIT} dtr.fintlabs.no/beta/audit-admin-mongo:${BRANCH_NAME}"
+                withDockerRegistry([credentialsId: 'dtr-fintlabs-no', url: 'https://dtr.fintlabs.no']) {
+                    sh "docker push 'dtr.fintlabs.no/beta/audit-admin-mongo:${BRANCH_NAME}'"
+                }
+            }
+        }
+        /*
+        stage('Coverage') {
+            agent {
+                docker {
+                    label 'docker'
+                    image 'gradle:4.9.0-jdk8-alpine'
+                }
+            }
+            environment {
+                COVERALLS_REPO_TOKEN = ''
+            }
+            steps {
+                sh 'gradle --no-daemon check jacocoTestReport coveralls'
+            }
+        }
+        */
     }
 }
